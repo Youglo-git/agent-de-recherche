@@ -1,0 +1,42 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Olivier Clery//Pipeline emploi//FR
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VTIMEZONE
+TZID:Europe/Paris
+BEGIN:STANDARD
+DTSTART:19701025T030000
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+TZNAME:CET
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10
+END:STANDARD
+BEGIN:DAYLIGHT
+DTSTART:19700329T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+TZNAME:CEST
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=3
+END:DAYLIGHT
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:pipeline-veille-emploi-hebdo@olivierclery.local
+DTSTAMP:20260419T130000Z
+DTSTART;TZID=Europe/Paris:20260426T100000
+DTEND;TZID=Europe/Paris:20260426T101500
+SUMMARY:Veille emploi - Consulter le rapport hebdo
+DESCRIPTION:Le pipeline de recherche d'emploi a genere un nouveau rapport ce matin a 9h.\n\nLien direct (cliquable) :\nfile:///C:/Users/olivi/Documents/Agent%20recherche%20d%27annonces/rapport.html\n\nChemin a copier-coller dans l'Explorateur Windows :\nC:\Users\olivi\Documents\Agent recherche d'annonces\rapport.html\n\nL'historique des rapports est dans le sous-dossier 'historique\\' du dossier projet.\n\n--- Pipeline automatique ---\nagent-de-recherche -> scoring-annonces -> dashboard-annonces
+LOCATION:C:\Users\olivi\Documents\Agent recherche d'annonces\rapport.html
+URL:file:///C:/Users/olivi/Documents/Agent%20recherche%20d%27annonces/rapport.html
+RRULE:FREQ=WEEKLY;BYDAY=SU
+PRIORITY:5
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+BEGIN:VALARM
+TRIGGER:-PT15M
+ACTION:DISPLAY
+DESCRIPTION:Veille emploi : nouveau rapport disponible
+END:VALARM
+END:VEVENT
+END:VCALENDAR

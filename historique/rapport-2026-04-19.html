@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Dashboard recherche d'emploi — 19/04/2026 à 20:39</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e5e5e3;
+    --text: #1f1d1a;
+    --text-muted: #6b6862;
+    --accent: #c15f3c;
+    --accent-soft: #fbe9e1;
+    --green: #4a7c59;
+    --green-soft: #e3efe6;
+    --amber: #b88521;
+    --amber-soft: #faedd0;
+    --red: #a83232;
+    --red-soft: #f5dcdc;
+    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04);
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg); color: var(--text);
+    margin: 0; padding: 0; line-height: 1.5;
+  }
+  header.page {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 24px 32px;
+  }
+  header.page h1 { margin: 0 0 8px 0; font-size: 22px; font-weight: 600; }
+  header.page .meta { color: var(--text-muted); font-size: 13px; }
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; padding: 24px 32px; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px; box-shadow: var(--shadow);
+  }
+  .stat .num { font-size: 28px; font-weight: 600; color: var(--accent); }
+  .stat .lbl { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .filters {
+    background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    padding: 16px 32px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .filters label { font-size: 13px; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px; }
+  .filters input[type=range] { width: 160px; }
+  .filters input[type=text], .filters select {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 10px; font-size: 14px;
+  }
+  .filters .source-multi {
+    display: flex; gap: 8px; flex-wrap: wrap; max-width: 420px;
+  }
+  .filters .source-multi label {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 14px;
+    padding: 4px 10px; cursor: pointer; flex-direction: row; align-items: center; gap: 6px;
+  }
+  .filters .source-multi input { margin: 0; }
+  .filters .reset {
+    margin-left: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 12px; cursor: pointer; font-size: 13px;
+  }
+  table {
+    width: calc(100% - 64px); margin: 24px 32px; border-collapse: collapse;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    overflow: hidden; box-shadow: var(--shadow);
+  }
+  th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; vertical-align: top; }
+  th { background: var(--bg); font-weight: 600; color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; user-select: none; }
+  th .arrow { opacity: 0.4; margin-left: 4px; font-size: 10px; }
+  th.sorted .arrow { opacity: 1; color: var(--accent); }
+  tbody tr { transition: background 0.15s; }
+  tbody tr:hover { background: var(--bg); }
+  tbody tr.candidatee { opacity: 0.5; }
+  tbody tr.candidatee td { text-decoration: line-through; }
+  .score-pill {
+    display: inline-block; padding: 4px 10px; border-radius: 20px; font-weight: 600; font-size: 14px;
+    min-width: 36px; text-align: center;
+  }
+  .score-high { background: var(--green-soft); color: var(--green); }
+  .score-mid { background: var(--amber-soft); color: var(--amber); }
+  .score-low { background: var(--red-soft); color: var(--red); }
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 10px; font-size: 12px; cursor: pointer; color: var(--text);
+    transition: all 0.15s;
+  }
+  .btn:hover { background: var(--accent-soft); border-color: var(--accent); }
+  .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .btn-primary:hover { background: #a04e30; }
+  .detail-row { background: var(--bg); }
+  .detail-row td { padding: 16px 24px; }
+  .detail-grid {
+    display: grid; grid-template-columns: 2fr 1fr; gap: 24px;
+  }
+  .detail-section h4 { margin: 0 0 8px 0; font-size: 13px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
+  .score-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+  .score-bar .lbl { width: 110px; color: var(--text-muted); }
+  .score-bar .bar { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .score-bar .fill { height: 100%; background: var(--accent); }
+  .score-bar .val { width: 50px; text-align: right; font-variant-numeric: tabular-nums; }
+  .extrait { font-size: 13px; color: var(--text-muted); font-style: italic; padding: 8px 12px; background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 4px 4px 0; }
+  .tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+  .tag { background: var(--accent-soft); color: var(--accent); padding: 2px 8px; border-radius: 12px; font-size: 11px; }
+  .tag.miss { background: var(--red-soft); color: var(--red); }
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; background: var(--text); color: white;
+    padding: 12px 20px; border-radius: 8px; font-size: 14px; box-shadow: var(--shadow);
+    opacity: 0; transform: translateY(10px); transition: all 0.3s;
+    pointer-events: none; max-width: 360px;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .empty { text-align: center; padding: 64px 32px; color: var(--text-muted); }
+  footer { padding: 24px 32px; color: var(--text-muted); font-size: 12px; text-align: center; }
+</style>
+</head>
+<body>
+
+<header class="page">
+  <h1>Dashboard recherche d'emploi</h1>
+  <div class="meta">Généré le 19/04/2026 à 20:39 — 7 annonces analysées</div>
+</header>
+
+<section class="summary" id="summary"></section>
+
+<div class="filters">
+  <label>Score min : <span id="scoreVal">0</span>
+    <input type="range" id="scoreFilter" min="0" max="100" value="0" />
+  </label>
+  <label>Ville
+    <input type="text" id="villeFilter" placeholder="Ex : Paris, Lyon..." />
+  </label>
+  <label>Période
+    <select id="dateFilter">
+      <option value="all">Tout</option>
+      <option value="1">24 dernières heures</option>
+      <option value="7" selected>7 derniers jours</option>
+      <option value="30">30 derniers jours</option>
+    </select>
+  </label>
+  <label>Sources
+    <div class="source-multi" id="sourceFilter"></div>
+  </label>
+  <label style="flex-direction: row; align-items: center; gap: 6px;">
+    <input type="checkbox" id="hideCandidatees" checked /> Masquer les annonces déjà postulées
+  </label>
+  <button class="reset" id="resetFilters">Réinitialiser</button>
+</div>
+
+<table id="annoncesTable">
+  <thead>
+    <tr>
+      <th data-sort="score" class="sorted">Score <span class="arrow">▼</span></th>
+      <th data-sort="titre">Titre <span class="arrow">↕</span></th>
+      <th data-sort="entreprise">Entreprise <span class="arrow">↕</span></th>
+      <th data-sort="localisation">Localisation <span class="arrow">↕</span></th>
+      <th data-sort="source">Source <span class="arrow">↕</span></th>
+      <th data-sort="date">Date <span class="arrow">↕</span></th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="annoncesBody"></tbody>
+</table>
+
+<div class="empty" id="emptyState" style="display:none">Aucune annonce ne correspond aux filtres actifs.</div>
+
+<footer>
+  Pipeline : <code>agent-de-recherche</code> → <code>scoring-annonces</code> → <code>dashboard-annonces</code> → <code>envoi-rapport-email</code><br>
+  Données stockées localement dans <code>~/.agent-recherche/annonces.db</code>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // === Données injectées par generate_dashboard.py ===
+  const ANNONCES = [{"id": 7, "url": "https://www.francetravail.fr/candidat/offres/recherche/detail/177PLMK", "url_canonique": "https://www.francetravail.fr/candidat/offres/recherche/detail/177plmk", "url_hash": "7296400ef8601bbbd40f6c15599c34b1cab5bb3a9fb06a18754b6b4968602341", "source": "France Travail", "titre": "Program Manager IT - Full Remote", "entreprise": "Capgemini", "localisation": "Full remote France", "contrat": "CDI", "salaire_brut": "95 000 - 115 000 EUR", "extrait": "Directeur de projet / Program Manager pour piloter un programme international de transformation IT chez nos clients grands comptes. Prince2 et Scrum requis. PMO. 12+ ans. Full remote 100%. Anglais courant C1 indispensable. Statut Cadre dirigeant. ETI internationale.", "criteres_matches": [], "criteres_manquants": [], "match_global": 1, "collectee_le": "2026-04-18T07:53:59+00:00", "derniere_vue_le": "2026-04-18T07:53:59+00:00", "score_global": 77, "score_detail": {"gate": {"ok": true, "obligatoires_mots_manques": [], "obligatoires_profil_manques": [], "exclus_presents": []}, "mots_cles": {"score": 22, "max": 40, "trouves": ["Program Manager", "Prince2", "Scrum", "PMO", "Transformation"], "manques": ["Chef de programme", "Agile", "SI", "Cloud"]}, "profil_poste": {"score": 30, "max": 40, "details": [{"critere": "contrat_accepte", "poids": "obligatoire", "ok": true, "raison": "['cdi', 'freelance'] trouvé dans l'annonce"}, {"critere": "experience_min_annees", "poids": "obligatoire", "ok": true, "raison": "12.0 >= 10.0"}, {"critere": "statut", "poids": "obligatoire", "ok": true, "raison": "['cadre', 'cadre dirigeant'] trouvé dans l'annonce"}, {"critere": "salaire_annuel_brut_min_eur", "poids": "souhaitable", "ok": true, "raison": "115000.0 >= 85000.0"}, {"critere": "experience_max_annees", "poids": "souhaitable", "ok": true, "raison": "12.0 <= 25.0"}, {"critere": "anglais_niveau_accepte", "poids": "souhaitable", "ok": true, "raison": "['b2', 'c1', 'c2', 'bilingue'] trouvé dans l'annonce"}, {"critere": "teletravail_min_pct", "poids": "souhaitable", "ok": true, "raison": "100.0 >= 60.0"}, {"critere": "deplacements_max_pct", "poids": "souhaitable", "ok": false, "raison": "valeur absente de l'annonce"}, {"critere": "mobilite_internationale", "poids": "souhaitable", "ok": false, "raison": "valeur absente de l'annonce"}, {"critere": "zone_geo_acceptee", "poids": "souhaitable", "ok": true, "raison": "['france', 'belgique', 'suisse', 'luxembourg'] trouvé dans l'annonce"}, {"critere": "taille_entreprise_acceptee", "poids": "souhaitable", "ok": true, "raison": "['eti', 'grand groupe', 'scale-up'] trouvé dans l'annonce"}]}, "localisation": {"score": 20, "max": 20, "villes_trouvees": ["Full remote"], "teletravail_pct": 100.0, "full_remote": true, "seuil_teletravail_min": 100.0}, "bonus_malus": {"recente": 5, "salaire_au_dessus": 0, "source_faible": 0}, "score_brut": 77, "score_global": 77}, "score_calcule_le": "2026-04-19T18:39:46+00:00", "salaire_absent": 0, "date_publication": null, "url_active": null, "derniere_verification_le": null}, {"id": 2, "url": "https://www.linkedin.com/jobs/view/3892014567", "url_canonique": "https://www.linkedin.com/jobs/view/3892014567", "url_hash": "aeedc756ee5db0709f11079455330dd3ae073b41c1e44355fe058380e57d788d", "source": "LinkedIn", "titre": "Chef de programme transformation IT", "entreprise": "BNP Paribas", "localisation": "Paris (75)", "contrat": "CDI", "salaire_brut": "100k-120k€", "extrait": "Directeur de projet senior pour piloter un programme de transformation IT majeur. Prince2 et Scrum requis, 12+ ans d'expérience en gestion de projet IT. Statut Cadre dirigeant. 60% télétravail possible. Anglais B2 professionnel. Grand groupe bancaire international.", "criteres_matches": [], "criteres_manquants": [], "match_global": 1, "collectee_le": "2026-04-15T07:53:59+00:00", "derniere_vue_le": "2026-04-15T07:53:59+00:00", "score_global": 69, "score_detail": {"gate": {"ok": true, "obligatoires_mots_manques": [], "obligatoires_profil_manques": [], "exclus_presents": []}, "mots_cles": {"score": 22, "max": 40, "trouves": ["Chef de programme", "Prince2", "Scrum", "Transformation", "SI"], "manques": ["Program Manager", "Agile", "PMO", "Cloud"]}, "profil_poste": {"score": 25, "max": 40, "details": [{"critere": "contrat_accepte", "poids": "obligatoire", "ok": true, "raison": "['cdi', 'freelance'] trouvé dans l'annonce"}, {"critere": "experience_min_annees", "poids": "obligatoire", "ok": true, "raison": "12.0 >= 10.0"}, {"critere": "statut", "poids": "obligatoire", "ok": true, "raison": "['cadre', 'cadre dirigeant'] trouvé dans l'annonce"}, {"critere": "salaire_annuel_brut_min_eur", "poids": "souhaitable", "ok": true, "raison": "120000.0 >= 85000.0"}, {"critere": "experience_max_annees", "poids": "souhaitable", "ok": true, "raison": "12.0 <= 25.0"}, {"critere": "anglais_niveau_accepte", "poids": "souhaitable", "ok": true, "raison": "['b2', 'c1', 'c2', 'bilingue'] trouvé dans l'annonce"}, {"critere": "teletravail_min_pct", "poids": "souhaitable", "ok": true, "raison": "60.0 >= 60.0"}, {"critere": "deplacements_max_pct", "poids": "souhaitable", "ok": false, "raison": "valeur absente de l'annonce"}, {"critere": "mobilite_internationale", "poids": "souhaitable", "ok": false, "raison": "valeur absente de l'annonce"}, {"critere": "zone_geo_acceptee", "poids": "souhaitable", "ok": false, "raison": "['france', 'belgique', 'suisse', 'luxembourg'] absent dans l'annonce"}, {"critere": "taille_entreprise_acceptee", "poids": "souhaitable", "ok": true, "raison": "['eti', 'grand groupe', 'scale-up'] trouvé dans l'annonce"}]}, "localisation": {"score": 17, "max": 20, "villes_trouvees": ["Paris"], "teletravail_pct": 60.0, "full_remote": false, "seuil_teletravail_min": 100.0}, "bonus_malus": {"recente": 5, "salaire_au_dessus": 0, "source_faible": 0}, "score_brut": 69, "score_global": 69}, "score_calcule_le": "2026-04-19T18:39:46+00:00", "salaire_absent": 0, "date_publication": null, "url_active": null, "derniere_verification_le": null}, {"id": 4, "url": "https://www.apec.fr/candidat/recherche-emploi.html/emploi/detail/171234567W", "url_canonique": "https://www.apec.fr/candidat/recherche-emploi.html/emploi/detail/171234567w", "url_hash": "2b8e590afc2955ae23fe382710786cd371e99e129bbd5527b6e972d315391529", "source": "APEC", "titre": "Directeur de Projet - Programme SI", "entreprise": "Orange Business Services", "localisation": "Lyon (69)", "contrat": "CDI", "salaire_brut": "90-100 k€", "extrait": "Directeur de projet senior pour programme SI critique. Prince2 obligatoire, expérience 15+ ans gestion de programmes complexes. PMO. Méthodologie agile. Télétravail 80% possible. Anglais B2 minimum. Statut Cadre dirigeant. Grand groupe télécom.", "criteres_matches": [], "criteres_manquants": [], "match_global": 1, "collectee_le": "2026-04-16T07:53:59+00:00", "derniere_vue_le": "2026-04-16T07:53:59+00:00", "score_global": 66, "score_detail": {"gate": {"ok": true, "obligatoires_mots_manques": [], "obligatoires_profil_manques": [], "exclus_presents": []}, "mots_cles": {"score": 18, "max": 40, "trouves": ["Prince2", "Agile", "PMO", "SI"], "manques": ["Chef de programme", "Program Manager", "Scrum", "Transformation", "Cloud"]}, "profil_poste": {"score": 25, "max": 40, "details": [{"critere": "contrat_accepte", "poids": "obligatoire", "ok": true, "raison": "['cdi', 'freelance'] trouvé dans l'annonce"}, {"critere": "experience_min_annees", "poids": "obligatoire", "ok": true, "raison": "15.0 >= 10.0"}, {"critere": "statut", "poids": "obligatoire", "ok": true, "raison": "['cadre', 'cadre dirigeant'] trouvé dans l'annonce"}, {"critere": "salaire_annuel_brut_min_eur", "poids": "souhaitable", "ok": true, "raison": "100000.0 >= 85000.0"}, {"critere": "experience_max_annees", "poids": "souhaitable", "ok": true, "raison": "15.0 <= 25.0"}, {"critere": "anglais_niveau_accepte", "poids": "souhaitable", "ok": true, "raison": "['b2', 'c1', 'c2', 'bilingue'] trouvé dans l'annonce"}, {"critere": "teletravail_min_pct", "poids": "souhaitable", "ok": true, "raison": "80.0 >= 60.0"}, {"critere": "deplacements_max_pct", "poids": "souhaitable", "ok": false, "raison": "valeur absente de l'annonce"}, {"critere": "mobilite_internationale", "poids": "souhaitable", "ok": false, "raison": "valeur absente de l'annonce"}, {"critere": "zone_geo_acceptee", "poids": "souhaitable", "ok": false, "raison": "['france', 'belgique', 'suisse', 'luxembourg'] absent dans l'annonce"}, {"critere": "taille_entreprise_acceptee", "poids": "souhaitable", "ok": true, "raison": "['eti', 'grand groupe', 'scale-up'] trouvé dans l'annonce"}]}, "localisation": {"score": 18, "max": 20, "villes_trouvees": ["Lyon"], "teletravail_pct": 80.0, "full_remote": false, "seuil_teletravail_min": 100.0}, "bonus_malus": {"recente": 5, "salaire_au_dessus": 0, "source_faible": 0}, "score_brut": 66, "score_global": 66}, "score_calcule_le": "2026-04-19T18:39:46+00:00", "salaire_absent": 0, "date_publication": null, "url_active": null, "derniere_verification_le": null}, {"id": 3, "url": "https://www.welcometothejungle.com/fr/companies/doctolib/jobs/pmo-senior", "url_canonique": "https://www.welcometothejungle.com/fr/companies/doctolib/jobs/pmo-senior", "url_hash": "28b5784155867dd64fed22a2abf95c52a6d4661078f81ef1bacf6fc226020407", "source": "Welcome to the Jungle", "titre": "PMO Senior - Direction des Programmes", "entreprise": "Doctolib", "localisation": "Paris (75) - Hybride", "contrat": "CDI", "salaire_brut": "85 000 - 95 000 EUR", "extrait": "Directeur de projet PMO pour la direction des programmes Doctolib. Vous structurez le pilotage agile, animez les comités, gérez le portfolio projets. Scrum, SAFe, Prince2 sont des plus. 10+ ans en PMO/Direction de projets. Statut Cadre. Anglais B2. 60% télétravail. Scale-up santé.", "criteres_matches": [], "criteres_manquants": [], "match_global": 1, "collectee_le": "2026-04-18T07:53:59+00:00", "derniere_vue_le": "2026-04-18T07:53:59+00:00", "score_global": 65, "score_detail": {"gate": {"ok": true, "obligatoires_mots_manques": [], "obligatoires_profil_manques": [], "exclus_presents": []}, "mots_cles": {"score": 18, "max": 40, "trouves": ["Prince2", "Scrum", "Agile", "PMO"], "manques": ["Chef de programme", "Program Manager", "Transformation", "SI", "Cloud"]}, "profil_poste": {"score": 25, "max": 40, "details": [{"critere": "contrat_accepte", "poids": "obligatoire", "ok": true, "raison": "['cdi', 'freelance'] trouvé dans l'annonce"}, {"critere": "experience_min_annees", "poids": "obligatoire", "ok": true, "raison": "10.0 >= 10.0"}, {"critere": "statut", "poids": "obligatoire", "ok": true, "raison": "['cadre', 'cadre dirigeant'] trouvé dans l'annonce"}, {"critere": "salaire_annuel_brut_min_eur", "poids": "souhaitable", "ok": true, "raison": "95000.0 >= 85000.0"}, {"critere": "experience_max_annees", "poids": "souhaitable", "ok": true, "raison": "10.0 <= 25.0"}, {"critere": "anglais_niveau_accepte", "poids": "souhaitable", "ok": true, "raison": "['b2', 'c1', 'c2', 'bilingue'] trouvé dans l'annonce"}, {"critere": "teletravail_min_pct", "poids": "souhaitable", "ok": true, "raison": "60.0 >= 60.0"}, {"critere": "deplacements_max_pct", "poids": "souhaitable", "ok": false, "raison": "valeur absente de l'annonce"}, {"critere": "mobilite_internationale", "poids": "souhaitable", "ok": false, "raison": "valeur absente de l'annonce"}, {"critere": "zone_geo_acceptee", "poids": "souhaitable", "ok": false, "raison": "['france', 'belgique', 'suisse', 'luxembourg'] absent dans l'annonce"}, {"critere": "taille_entreprise_acceptee", "poids": "souhaitable", "ok": true, "raison": "['eti', 'grand groupe', 'scale-up'] trouvé dans l'annonce"}]}, "localisation": {"score": 17, "max": 20, "villes_trouvees": ["Paris"], "teletravail_pct": 60.0, "full_remote": false, "seuil_teletravail_min": 100.0}, "bonus_malus": {"recente": 5, "salaire_au_dessus": 0, "source_faible": 0}, "score_brut": 65, "score_global": 65}, "score_calcule_le": "2026-04-19T18:39:46+00:00", "salaire_absent": 0, "date_publication": null, "url_active": null, "derniere_verification_le": null}, {"id": 12, "url": "https://www.francetravail.fr/candidat/offres/recherche/detail/178XYWA", "url_canonique": "https://www.francetravail.fr/candidat/offres/recherche/detail/178xywa", "url_hash": "3a0cda91303724ce4937f3cb954d5e12060bc046560dd39761eece08c9fb1464", "source": "France Travail", "titre": "Directeur de Projet IT - Freelance", "entreprise": "Mission via ESN", "localisation": "Paris / Remote 80%", "contrat": "Freelance", "salaire_brut": "TJM 850-950 EUR", "extrait": "Mission longue durée pour un Directeur de Projet IT freelance. Programme de transformation digitale. Prince2, Scrum, PMO. 15+ ans d'expérience. Remote 80%. Anglais courant C1. Statut Cadre dirigeant. Grand groupe industriel.", "criteres_matches": [], "criteres_manquants": [], "match_global": 1, "collectee_le": "2026-04-18T07:53:59+00:00", "derniere_vue_le": "2026-04-18T07:53:59+00:00", "score_global": 65, "score_detail": {"gate": {"ok": true, "obligatoires_mots_manques": [], "obligatoires_profil_manques": [], "exclus_presents": []}, "mots_cles": {"score": 22, "max": 40, "trouves": ["Prince2", "Scrum", "PMO", "Transformation", "SI"], "manques": ["Chef de programme", "Program Manager", "Agile", "Cloud"]}, "profil_poste": {"score": 20, "max": 40, "details": [{"critere": "contrat_accepte", "poids": "obligatoire", "ok": true, "raison": "['cdi', 'freelance'] trouvé dans l'annonce"}, {"critere": "experience_min_annees", "poids": "obligatoire", "ok": true, "raison": "15.0 >= 10.0"}, {"critere": "statut", "poids": "obligatoire", "ok": true, "raison": "['cadre', 'cadre dirigeant'] trouvé dans l'annonce"}, {"critere": "salaire_annuel_brut_min_eur", "poids": "souhaitable", "ok": false, "raison": "valeur absente de l'annonce"}, {"critere": "experience_max_annees", "poids": "souhaitable", "ok": true, "raison": "15.0 <= 25.0"}, {"critere": "anglais_niveau_accepte", "poids": "souhaitable", "ok": true, "raison": "['b2', 'c1', 'c2', 'bilingue'] trouvé dans l'annonce"}, {"critere": "teletravail_min_pct", "poids": "souhaitable", "ok": true, "raison": "80.0 >= 60.0"}, {"critere": "deplacements_max_pct", "poids": "souhaitable", "ok": false, "raison": "valeur absente de l'annonce"}, {"critere": "mobilite_internationale", "poids": "souhaitable", "ok": false, "raison": "valeur absente de l'annonce"}, {"critere": "zone_geo_acceptee", "poids": "souhaitable", "ok": false, "raison": "['france', 'belgique', 'suisse', 'luxembourg'] absent dans l'annonce"}, {"critere": "taille_entreprise_acceptee", "poids": "souhaitable", "ok": true, "raison": "['eti', 'grand groupe', 'scale-up'] trouvé dans l'annonce"}]}, "localisation": {"score": 18, "max": 20, "villes_trouvees": ["Paris"], "teletravail_pct": 80.0, "full_remote": false, "seuil_teletravail_min": 100.0}, "bonus_malus": {"recente": 5, "salaire_au_dessus": 0, "source_faible": 0}, "score_brut": 65, "score_global": 65}, "score_calcule_le": "2026-04-19T18:39:46+00:00", "salaire_absent": 0, "date_publication": null, "url_active": null, "derniere_verification_le": null}, {"id": 1, "url": "https://www.francetravail.fr/candidat/offres/recherche/detail/176FQTL", "url_canonique": "https://www.francetravail.fr/candidat/offres/recherche/detail/176fqtl", "url_hash": "2ece10415fdfae3fa59e5d5dd4708dc853f752c1fdf66b0d2a197d0d3ac3da6d", "source": "France Travail", "titre": "Directeur de projet IT - Transformation digitale", "entreprise": "Decathlon", "localisation": "Lille (59)", "contrat": "CDI", "salaire_brut": "95 000 - 110 000 EUR / an", "extrait": "Directeur de projet IT confirmé pour piloter notre transformation digitale. Vous animez des équipes scrum, certification Prince2 ou PMI requise, expérience PMO 10+ ans. Anglais courant niveau C1. Télétravail 60% (3j/semaine). Méthodes agiles, gestion de portfolio. Statut Cadre dirigeant. Postes basés à Lille, scale-up retail.", "criteres_matches": [], "criteres_manquants": [], "match_global": 1, "collectee_le": "2026-04-17T07:53:59+00:00", "derniere_vue_le": "2026-04-17T07:53:59+00:00", "score_global": 57, "score_detail": {"gate": {"ok": true, "obligatoires_mots_manques": [], "obligatoires_profil_manques": [], "exclus_presents": []}, "mots_cles": {"score": 22, "max": 40, "trouves": ["Prince2", "Scrum", "Agile", "PMO", "Transformation"], "manques": ["Chef de programme", "Program Manager", "SI", "Cloud"]}, "profil_poste": {"score": 25, "max": 40, "details": [{"critere": "contrat_accepte", "poids": "obligatoire", "ok": true, "raison": "['cdi', 'freelance'] trouvé dans l'annonce"}, {"critere": "experience_min_annees", "poids": "obligatoire", "ok": true, "raison": "10.0 >= 10.0"}, {"critere": "statut", "poids": "obligatoire", "ok": true, "raison": "['cadre', 'cadre dirigeant'] trouvé dans l'annonce"}, {"critere": "salaire_annuel_brut_min_eur", "poids": "souhaitable", "ok": true, "raison": "110000.0 >= 85000.0"}, {"critere": "experience_max_annees", "poids": "souhaitable", "ok": true, "raison": "10.0 <= 25.0"}, {"critere": "anglais_niveau_accepte", "poids": "souhaitable", "ok": true, "raison": "['b2', 'c1', 'c2', 'bilingue'] trouvé dans l'annonce"}, {"critere": "teletravail_min_pct", "poids": "souhaitable", "ok": true, "raison": "60.0 >= 60.0"}, {"critere": "deplacements_max_pct", "poids": "souhaitable", "ok": false, "raison": "valeur absente de l'annonce"}, {"critere": "mobilite_internationale", "poids": "souhaitable", "ok": false, "raison": "valeur absente de l'annonce"}, {"critere": "zone_geo_acceptee", "poids": "souhaitable", "ok": false, "raison": "['france', 'belgique', 'suisse', 'luxembourg'] absent dans l'annonce"}, {"critere": "taille_entreprise_acceptee", "poids": "souhaitable", "ok": true, "raison": "['eti', 'grand groupe', 'scale-up'] trouvé dans l'annonce"}]}, "localisation": {"score": 5, "max": 20, "villes_trouvees": [], "teletravail_pct": 60.0, "full_remote": false, "seuil_teletravail_min": 100.0}, "bonus_malus": {"recente": 5, "salaire_au_dessus": 0, "source_faible": 0}, "score_brut": 57, "score_global": 57}, "score_calcule_le": "2026-04-19T18:39:46+00:00", "salaire_absent": 0, "date_publication": null, "url_active": null, "derniere_verification_le": null}, {"id": 10, "url": "https://www.apec.fr/candidat/recherche-emploi.html/emploi/detail/172345678X", "url_canonique": "https://www.apec.fr/candidat/recherche-emploi.html/emploi/detail/172345678x", "url_hash": "82e899e21c4270f573716770e6e088e938cf4222e89b9c040c1fe7ebcd52f110", "source": "APEC", "titre": "PMO Manager - Direction des Opérations", "entreprise": "Total Energies", "localisation": "La Défense (92)", "contrat": "CDI", "salaire_brut": "90 000 - 105 000 EUR", "extrait": "Directeur de projet PMO Manager pour la direction des opérations IT. Prince2, Scrum, gestion de portfolio. 10+ ans en PMO/Direction projets. Statut Cadre. Télétravail 50%. Anglais B2. Grand groupe énergie.", "criteres_matches": [], "criteres_manquants": [], "match_global": 1, "collectee_le": "2026-04-17T07:53:59+00:00", "derniere_vue_le": "2026-04-17T07:53:59+00:00", "score_global": 42, "score_detail": {"gate": {"ok": true, "obligatoires_mots_manques": [], "obligatoires_profil_manques": [], "exclus_presents": []}, "mots_cles": {"score": 13, "max": 40, "trouves": ["Prince2", "Scrum", "PMO"], "manques": ["Chef de programme", "Program Manager", "Agile", "Transformation", "SI", "Cloud"]}, "profil_poste": {"score": 20, "max": 40, "details": [{"critere": "contrat_accepte", "poids": "obligatoire", "ok": true, "raison": "['cdi', 'freelance'] trouvé dans l'annonce"}, {"critere": "experience_min_annees", "poids": "obligatoire", "ok": true, "raison": "10.0 >= 10.0"}, {"critere": "statut", "poids": "obligatoire", "ok": true, "raison": "['cadre', 'cadre dirigeant'] trouvé dans l'annonce"}, {"critere": "salaire_annuel_brut_min_eur", "poids": "souhaitable", "ok": true, "raison": "105000.0 >= 85000.0"}, {"critere": "experience_max_annees", "poids": "souhaitable", "ok": true, "raison": "10.0 <= 25.0"}, {"critere": "anglais_niveau_accepte", "poids": "souhaitable", "ok": true, "raison": "['b2', 'c1', 'c2', 'bilingue'] trouvé dans l'annonce"}, {"critere": "teletravail_min_pct", "poids": "souhaitable", "ok": false, "raison": "50.0 >= 60.0"}, {"critere": "deplacements_max_pct", "poids": "souhaitable", "ok": false, "raison": "valeur absente de l'annonce"}, {"critere": "mobilite_internationale", "poids": "souhaitable", "ok": false, "raison": "valeur absente de l'annonce"}, {"critere": "zone_geo_acceptee", "poids": "souhaitable", "ok": false, "raison": "['france', 'belgique', 'suisse', 'luxembourg'] absent dans l'annonce"}, {"critere": "taille_entreprise_acceptee", "poids": "souhaitable", "ok": true, "raison": "['eti', 'grand groupe', 'scale-up'] trouvé dans l'annonce"}]}, "localisation": {"score": 4, "max": 20, "villes_trouvees": [], "teletravail_pct": 50.0, "full_remote": false, "seuil_teletravail_min": 100.0}, "bonus_malus": {"recente": 5, "salaire_au_dessus": 0, "source_faible": 0}, "score_brut": 42, "score_global": 42}, "score_calcule_le": "2026-04-19T18:39:46+00:00", "salaire_absent": 0, "date_publication": null, "url_active": null, "derniere_verification_le": null}];
+  const QUESTIONS_DIR = "/sessions/confident-cool-mendel/mnt/Agent recherche d'annonces/questions-annonces";
+
+  // === État UI ===
+  const state = {
+    sortBy: 'score',
+    sortDir: 'desc',
+    minScore: 0,
+    ville: '',
+    datePeriode: '7',
+    sourcesActives: new Set(ANNONCES.map(a => a.source)),
+    hideCandidatees: true,
+  };
+
+  // === Helpers ===
+  function scoreClass(s) {
+    if (s >= 75) return 'score-high';
+    if (s >= 50) return 'score-mid';
+    return 'score-low';
+  }
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    try {
+      const d = new Date(iso);
+      return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    } catch (e) { return iso.slice(0, 10); }
+  }
+  function daysSince(iso) {
+    if (!iso) return Infinity;
+    return (Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60 * 24);
+  }
+  function slugify(s) {
+    return (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 40);
+  }
+  function isCandidatee(annonce) {
+    return localStorage.getItem('cand-' + annonce.url_hash) !== null;
+  }
+  function toast(msg, ms = 4000) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => t.classList.remove('show'), ms);
+  }
+
+  // === Filtrage ===
+  function getFiltered() {
+    return ANNONCES.filter(a => {
+      if ((a.score_global || 0) < state.minScore) return false;
+      if (state.ville && !(a.localisation || '').toLowerCase().includes(state.ville.toLowerCase())) return false;
+      if (state.datePeriode !== 'all' && daysSince(a.collectee_le) > parseFloat(state.datePeriode)) return false;
+      if (!state.sourcesActives.has(a.source)) return false;
+      if (state.hideCandidatees && isCandidatee(a)) return false;
+      return true;
+    });
+  }
+
+  function getSorted(list) {
+    const key = state.sortBy;
+    const dir = state.sortDir === 'asc' ? 1 : -1;
+    return [...list].sort((a, b) => {
+      let va, vb;
+      if (key === 'score') { va = a.score_global || 0; vb = b.score_global || 0; }
+      else if (key === 'date') { va = a.collectee_le || ''; vb = b.collectee_le || ''; }
+      else { va = (a[key] || '').toString().toLowerCase(); vb = (b[key] || '').toString().toLowerCase(); }
+      if (va < vb) return -1 * dir;
+      if (va > vb) return 1 * dir;
+      return 0;
+    });
+  }
+
+  // === Rendu ===
+  function renderSummary() {
+    const total = ANNONCES.length;
+    const retenues = ANNONCES.filter(a => (a.score_global || 0) > 0).length;
+    const nouvelles7j = ANNONCES.filter(a => daysSince(a.collectee_le) <= 7).length;
+    const moyenne = retenues > 0 ? Math.round(ANNONCES.filter(a => (a.score_global || 0) > 0).reduce((s, a) => s + a.score_global, 0) / retenues) : 0;
+    document.getElementById('summary').innerHTML = `
+      <div class="stat"><div class="num">${total}</div><div class="lbl">Total analysées</div></div>
+      <div class="stat"><div class="num">${retenues}</div><div class="lbl">Retenues (score > 0)</div></div>
+      <div class="stat"><div class="num">${nouvelles7j}</div><div class="lbl">Nouvelles (7 j)</div></div>
+      <div class="stat"><div class="num">${moyenne}</div><div class="lbl">Score moyen</div></div>
+    `;
+  }
+
+  function renderSourceFilter() {
+    const sources = [...new Set(ANNONCES.map(a => a.source))].sort();
+    document.getElementById('sourceFilter').innerHTML = sources.map(s => `
+      <label><input type="checkbox" data-source="${s}" ${state.sourcesActives.has(s) ? 'checked' : ''}/> ${s}</label>
+    `).join('');
+    document.querySelectorAll('#sourceFilter input').forEach(cb => {
+      cb.addEventListener('change', e => {
+        if (e.target.checked) state.sourcesActives.add(e.target.dataset.source);
+        else state.sourcesActives.delete(e.target.dataset.source);
+        renderTable();
+      });
+    });
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('annoncesBody');
+    const list = getSorted(getFiltered());
+    document.getElementById('emptyState').style.display = list.length === 0 ? 'block' : 'none';
+
+    tbody.innerHTML = list.map((a, idx) => {
+      const cand = isCandidatee(a);
+      const sc = a.score_global || 0;
+      return `
+        <tr class="${cand ? 'candidatee' : ''}" data-idx="${idx}">
+          <td><span class="score-pill ${scoreClass(sc)}">${sc}</span></td>
+          <td><strong>${escapeHtml(a.titre || '(sans titre)')}</strong></td>
+          <td>${escapeHtml(a.entreprise || '—')}</td>
+          <td>${escapeHtml(a.localisation || '—')}</td>
+          <td>${escapeHtml(a.source || '—')}</td>
+          <td>${fmtDate(a.collectee_le)}</td>
+          <td class="actions">
+            <button class="btn btn-primary" data-action="postuler" data-url="${escapeAttr(a.url)}" data-hash="${escapeAttr(a.url_hash)}">Postuler</button>
+            <button class="btn" data-action="question" data-idx="${idx}">Question Claude</button>
+            <button class="btn" data-action="detail" data-idx="${idx}">Détail</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    // Bind actions
+    tbody.querySelectorAll('button[data-action]').forEach(btn => {
+      btn.addEventListener('click', onAction);
+    });
+  }
+
+  function onAction(e) {
+    e.stopPropagation();
+    const action = e.currentTarget.dataset.action;
+    if (action === 'postuler') {
+      const url = e.currentTarget.dataset.url;
+      const hash = e.currentTarget.dataset.hash;
+      window.open(url, '_blank', 'noopener,noreferrer');
+      localStorage.setItem('cand-' + hash, JSON.stringify({ date: new Date().toISOString() }));
+      toast('Annonce ouverte et marquée comme candidatée.');
+      renderTable();
+    } else if (action === 'question') {
+      const list = getSorted(getFiltered());
+      genererFicheQuestion(list[parseInt(e.currentTarget.dataset.idx)]);
+    } else if (action === 'detail') {
+      const list = getSorted(getFiltered());
+      toggleDetail(e.currentTarget.closest('tr'), list[parseInt(e.currentTarget.dataset.idx)]);
+    }
+  }
+
+  function toggleDetail(row, annonce) {
+    const next = row.nextElementSibling;
+    if (next && next.classList.contains('detail-row')) { next.remove(); return; }
+    const detail = annonce.score_detail || {};
+    const mc = detail.mots_cles || {};
+    const pp = detail.profil_poste || {};
+    const loc = detail.localisation || {};
+    const bm = detail.bonus_malus || {};
+    const detailRow = document.createElement('tr');
+    detailRow.classList.add('detail-row');
+    detailRow.innerHTML = `
+      <td colspan="7">
+        <div class="detail-grid">
+          <div class="detail-section">
+            <h4>Extrait</h4>
+            <div class="extrait">${escapeHtml(annonce.extrait || '(extrait non disponible)')}</div>
+            <h4 style="margin-top:16px">Critères matchés</h4>
+            <div class="tags">
+              ${(mc.trouves || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('') || '<em>—</em>'}
+            </div>
+            ${mc.manques && mc.manques.length ? `
+              <h4 style="margin-top:8px">Manqués</h4>
+              <div class="tags">
+                ${mc.manques.map(t => `<span class="tag miss">${escapeHtml(t)}</span>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+          <div class="detail-section">
+            <h4>Ventilation du score</h4>
+            ${scoreBar('Mots-clés', mc.score, mc.max)}
+            ${scoreBar('Profil/poste', pp.score, pp.max)}
+            ${scoreBar('Localisation', loc.score, loc.max)}
+            ${Object.entries(bm).filter(([_, v]) => v).map(([k, v]) => `
+              <div class="score-bar"><span class="lbl">Bonus ${escapeHtml(k)}</span><span class="val">${v > 0 ? '+' : ''}${v}</span></div>
+            `).join('')}
+            <div class="score-bar" style="margin-top:8px;font-weight:600">
+              <span class="lbl">Total</span>
+              <span class="val">${annonce.score_global}/100</span>
+            </div>
+            <div style="margin-top:12px"><a href="${escapeAttr(annonce.url)}" target="_blank" rel="noopener">Voir l'annonce ↗</a></div>
+          </div>
+        </div>
+      </td>
+    `;
+    row.parentNode.insertBefore(detailRow, row.nextSibling);
+  }
+
+  function scoreBar(label, val, max) {
+    val = val || 0; max = max || 1;
+    const pct = Math.min(100, (val / max) * 100);
+    return `
+      <div class="score-bar">
+        <span class="lbl">${escapeHtml(label)}</span>
+        <span class="bar"><span class="fill" style="width:${pct}%"></span></span>
+        <span class="val">${val}/${max}</span>
+      </div>
+    `;
+  }
+
+  // === Bouton "Question Claude" ===
+  function genererFicheQuestion(annonce) {
+    const detail = annonce.score_detail || {};
+    const slug = slugify((annonce.entreprise || '') + '-' + (annonce.titre || ''));
+    const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const filename = `${ts}_${slug}.md`;
+    const md = buildFicheMarkdown(annonce, detail, filename);
+
+    // Téléchargement du fichier
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    // Prompt Cowork dans le presse-papier
+    const prompt = `Lis la fiche \`${QUESTIONS_DIR}/${filename}\` du projet et aide-moi à analyser cette annonce.\n\nJe veux comprendre :\n1. Les forces et faiblesses du poste pour mon profil\n2. Les questions à poser en entretien\n3. Comment adapter mon CV / lettre de motivation\n\nMa question complémentaire : `;
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(prompt).then(() => {
+        toast(`Fiche téléchargée. Place-la dans ${QUESTIONS_DIR}/ puis colle le prompt dans Cowork (déjà copié).`, 8000);
+      }).catch(() => fallbackCopy(prompt));
+    } else {
+      fallbackCopy(prompt);
+    }
+  }
+
+  function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast('Fiche téléchargée. Prompt copié — colle-le dans Cowork.', 8000); }
+    catch (e) { toast('Fiche téléchargée. Le presse-papier n\'est pas accessible — ouvre la fiche pour copier le prompt.', 8000); }
+    ta.remove();
+  }
+
+  function buildFicheMarkdown(annonce, detail, filename) {
+    const mc = detail.mots_cles || {};
+    const pp = detail.profil_poste || {};
+    const loc = detail.localisation || {};
+    const bm = detail.bonus_malus || {};
+    const ppDetails = (pp.details || []).map(d => `- ${d.critere} (${d.poids}) : ${d.ok ? '✓' : '✗'} — ${d.raison || ''}`).join('\n') || '_aucun_';
+    return `# Question sur : ${annonce.titre || '(sans titre)'} — ${annonce.entreprise || '?'}
+
+> Fiche générée par dashboard-annonces — ${new Date().toLocaleString('fr-FR')}
+> Filename : \`${filename}\`
+
+## Méta
+- **Source** : ${annonce.source || '—'}
+- **URL** : ${annonce.url || '—'}
+- **Localisation** : ${annonce.localisation || '—'}
+- **Contrat** : ${annonce.contrat || '—'}
+- **Salaire (brut affiché)** : ${annonce.salaire_brut || '—'}
+- **Collectée le** : ${annonce.collectee_le || '—'}
+
+## Score : **${annonce.score_global}/100**
+
+### Mots-clés (${mc.score || 0}/${mc.max || 0})
+- Trouvés : ${(mc.trouves || []).join(', ') || '—'}
+- Manqués : ${(mc.manques || []).join(', ') || '—'}
+
+### Profil & poste (${pp.score || 0}/${pp.max || 0})
+${ppDetails}
+
+### Localisation (${loc.score || 0}/${loc.max || 0})
+- Villes trouvées : ${(loc.villes_trouvees || []).join(', ') || '—'}
+- Télétravail détecté : ${loc.teletravail_pct != null ? loc.teletravail_pct + '%' : 'inconnu'}
+- Full remote : ${loc.full_remote ? 'oui' : 'non'}
+
+### Bonus / malus
+${Object.entries(bm).filter(([_, v]) => v).map(([k, v]) => `- ${k} : ${v > 0 ? '+' : ''}${v}`).join('\n') || '_aucun_'}
+
+## Extrait
+
+> ${(annonce.extrait || '_indisponible_').replace(/\n/g, '\n> ')}
+
+---
+
+## Ma question
+
+_(à compléter dans Cowork ou directement ici)_
+
+## Échanges
+
+_(Claude pourra écrire ici la synthèse de notre conversation)_
+`;
+  }
+
+  // === Helpers HTML escape ===
+  function escapeHtml(s) {
+    return (s || '').toString()
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function escapeAttr(s) { return escapeHtml(s); }
+
+  // === Filtres ===
+  document.getElementById('scoreFilter').addEventListener('input', e => {
+    state.minScore = parseInt(e.target.value);
+    document.getElementById('scoreVal').textContent = state.minScore;
+    renderTable();
+  });
+  document.getElementById('villeFilter').addEventListener('input', e => {
+    state.ville = e.target.value;
+    renderTable();
+  });
+  document.getElementById('dateFilter').addEventListener('change', e => {
+    state.datePeriode = e.target.value;
+    renderTable();
+  });
+  document.getElementById('hideCandidatees').addEventListener('change', e => {
+    state.hideCandidatees = e.target.checked;
+    renderTable();
+  });
+  document.getElementById('resetFilters').addEventListener('click', () => {
+    state.minScore = 0; state.ville = ''; state.datePeriode = '7'; state.hideCandidatees = true;
+    state.sourcesActives = new Set(ANNONCES.map(a => a.source));
+    document.getElementById('scoreFilter').value = 0;
+    document.getElementById('scoreVal').textContent = '0';
+    document.getElementById('villeFilter').value = '';
+    document.getElementById('dateFilter').value = '7';
+    document.getElementById('hideCandidatees').checked = true;
+    renderSourceFilter();
+    renderTable();
+  });
+
+  // Tri par colonne
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.sort;
+      if (state.sortBy === key) {
+        state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        state.sortBy = key;
+        state.sortDir = key === 'score' || key === 'date' ? 'desc' : 'asc';
+      }
+      document.querySelectorAll('th[data-sort]').forEach(t => {
+        t.classList.toggle('sorted', t.dataset.sort === state.sortBy);
+        const arrow = t.querySelector('.arrow');
+        if (t.dataset.sort === state.sortBy) arrow.textContent = state.sortDir === 'asc' ? '▲' : '▼';
+        else arrow.textContent = '↕';
+      });
+      renderTable();
+    });
+  });
+
+  // === Init ===
+  renderSummary();
+  renderSourceFilter();
+  renderTable();
+</script>
+</body>
+</html>

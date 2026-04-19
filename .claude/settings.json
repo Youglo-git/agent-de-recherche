@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell.exe -Command \"& 'C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe' auth login --with-token\")",
+      "Bash(powershell.exe -Command \"& 'C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe' auth status\")",
+      "Bash(powershell.exe -Command \"& 'C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe' repo create 'agent-de-recherche' --public --description 'Agent de recherche d annonces emploi' --source 'C:\\\\Users\\\\olivi\\\\Documents\\\\Claude\\\\Projects\\\\Agent recherche d annonces' --remote origin --push\")"
+    ]
+  }
+}
